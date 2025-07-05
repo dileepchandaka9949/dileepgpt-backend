@@ -1,24 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const { Configuration, OpenAIApi } = require('openai');
 
-router.post('/pay', async (req, res) => {
-  const { name } = req.body;
-  try {
-    const newUser = new User({ name, paid: true });
-    await newUser.save();
-    res.json({ success: true, message: '✅ Payment received. Chat unlocked!' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: '❌ Error saving user.' });
-  }
+const config = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(config);
+
+// Test route
+router.get('/', (req, res) => {
+  res.send('✅ API Route Working');
 });
 
-router.get('/users', async (req, res) => {
+// ChatGPT POST route
+router.post('/ask', async (req, res) => {
   try {
-    const users = await User.find().sort({ date: -1 });
-    res.json(users);
+    const { prompt } = req.body;
+
+    const response = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    res.json({ reply: response.data.choices[0].message.content });
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching users' });
+    res.status(500).json({ error: err.message });
   }
 });
 
