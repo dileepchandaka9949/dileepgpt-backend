@@ -1,20 +1,22 @@
-const express = require('express');
-const axios = require('axios');
+const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 
-router.post('/gpt', async (req, res) => {
-  const { message } = req.body;
+require("dotenv").config();
+
+router.post("/chat", async (req, res) => {
+  const { messages } = req.body;
 
   try {
     const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
+      "https://api.openai.com/v1/chat/completions",
       {
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: message }],
+        model: "gpt-3.5-turbo",
+        messages: messages,
       },
       {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
       }
@@ -23,8 +25,8 @@ router.post('/gpt', async (req, res) => {
     const reply = response.data.choices[0].message.content;
     res.json({ reply });
   } catch (error) {
-    console.error('GPT Error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Error communicating with GPT' });
+    console.error("Error from GPT:", error.message);
+    res.status(500).json({ error: "Failed to connect to GPT" });
   }
 });
 
