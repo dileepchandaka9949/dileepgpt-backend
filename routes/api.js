@@ -1,11 +1,33 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 
-// Sample route to test if backend is working
-router.get('/users', (req, res) => {
-  res.json([]);
+// GPT chat route
+router.post("/chat", async (req, res) => {
+  try {
+    const userMessage = req.body.message;
+
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: userMessage }],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer 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"
+        }
+      }
+    );
+
+    const reply = response.data.choices[0].message.content;
+    res.json({ reply });
+  } catch (error) {
+    console.error("GPT Error:", error.message);
+    res.status(500).json({ reply: "⚠️ GPT server error. Try again later." });
+  }
 });
 
-// You can add more routes here later
-
 module.exports = router;
+
