@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
-router.post('/chat', async (req, res) => {
+router.post('/gpt', async (req, res) => {
   const { message } = req.body;
 
   try {
@@ -15,16 +15,16 @@ router.post('/chat', async (req, res) => {
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer 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`
-        }
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
       }
     );
 
     const reply = response.data.choices[0].message.content;
     res.json({ reply });
   } catch (error) {
-    console.error('GPT Error:', error.message);
-    res.status(500).json({ reply: '❌ GPT Error. Try again.' });
+    console.error('GPT Error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Error communicating with GPT' });
   }
 });
 
