@@ -1,27 +1,21 @@
 const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-require('dotenv').config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// ✅ Important: This helps read JSON in the body
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error(err));
-
-app.use('/api', require('./routes/api'));
-
-app.get('/', (req, res) => {
-  res.send('✅ DileepGPT Backend is working!');
+// ✅ Temporary test route to check POST
+app.post('/', (req, res) => {
+  console.log('Request Body:', req.body);
+  res.json({
+    status: 'success',
+    message: 'POST request received successfully',
+    data: req.body
+  });
 });
 
+// ✅ Start your server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
