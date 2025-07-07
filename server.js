@@ -1,44 +1,45 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const dotenv = require("dotenv");
+const axios = require("axios");
+
+dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5000;
-
-// Middlewares
 app.use(cors());
 app.use(bodyParser.json());
 
-// Razorpay instance (test credentials)
-const razorpay = new Razorpay({
-  key_id: 'rzp_test_6aUdAJRGe6Glqm',         // replace with your key_id
-  key_secret: 'zmb8GJyWuJr48I4EFtvbDaqF'     // replace with your key_secret
+app.get("/", (req, res) => {
+  res.send("✅ DileepGPT backend is working!");
 });
 
-// ✅ Welcome route for browser
-app.get('/', (req, res) => {
-  res.send('✅ DileepGPT backend is running!');
-});
+app.post("/api/message", async (req, res) => {
+  const { message } = req.body;
 
-// ✅ Route to verify Razorpay payment
-app.post('/verify', (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: message }],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      }
+    );
 
-  const sign = razorpay_order_id + '|' + razorpay_payment_id;
-  const expectedSignature = crypto.createHmac('sha256', razorpay.key_secret)
-                                  .update(sign.toString())
-                                  .digest('hex');
-
-  if (expectedSignature === razorpay_signature) {
-    res.status(200).json({ success: true, message: 'Payment verified successfully' });
-  } else {
-    res.status(400).json({ success: false, message: 'Payment verification failed' });
+    res.json({ reply: response.data.choices[0].message.content });
+  } catch (error) {
+    console.error("GPT API Error:", error.message);
+    res.status(500).json({ error: "Failed to get GPT reply" });
   }
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`✅ Server running at http://localhost:${port}`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
