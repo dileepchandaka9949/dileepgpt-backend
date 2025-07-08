@@ -1,10 +1,8 @@
-// server.js
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 require('dotenv').config();
 
 const app = express();
@@ -24,10 +22,9 @@ mongoose
   .catch((err) => console.error('❌ MongoDB error:', err));
 
 // OpenAI config
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 // Routes
 app.get('/', (req, res) => {
@@ -38,12 +35,12 @@ app.post('/api/message', async (req, res) => {
   try {
     const userMessage = req.body.message;
 
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: userMessage }],
     });
 
-    const botReply = response.data.choices[0].message.content;
+    const botReply = response.choices[0].message.content;
     res.json({ reply: botReply });
   } catch (error) {
     console.error('❌ OpenAI Error:', error.message);
