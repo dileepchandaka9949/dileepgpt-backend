@@ -1,65 +1,57 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
-require("dotenv").config();
-const { OpenAI } = require("openai");
+// server.js
+
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const { Configuration, OpenAIApi } = require('openai');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// MongoDB Connection
+// MongoDB connection
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ MongoDB error:', err));
 
-// Mongoose Schema
-const MessageSchema = new mongoose.Schema({
-  user: String,
-  bot: String,
-});
-const Message = mongoose.model("Message", MessageSchema);
-
-// OpenAI Setup
-const openai = new OpenAI({
+// OpenAI config
+const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const openai = new OpenAIApi(configuration);
 
-// Health check
-app.get("/", (req, res) => {
-  res.send("✅ DileepGPT Backend is Running");
+// Routes
+app.get('/', (req, res) => {
+  res.send('✅ DileepGPT Backend is working');
 });
 
-// Chat Route
-app.post("/api/message", async (req, res) => {
-  const { message } = req.body;
-
+app.post('/api/message', async (req, res) => {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: message }],
+    const userMessage = req.body.message;
+
+    const response = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: userMessage }],
     });
 
-    const reply = response.choices[0].message.content;
-
-    const newMessage = new Message({ user: message, bot: reply });
-    await newMessage.save();
-
-    res.json({ reply });
+    const botReply = response.data.choices[0].message.content;
+    res.json({ reply: botReply });
   } catch (error) {
-    console.error("❌ GPT Error:", error.message);
-    res.status(500).json({ error: "Failed to get GPT reply" });
+    console.error('❌ OpenAI Error:', error.message);
+    res.status(500).json({ error: 'Failed to get GPT reply' });
   }
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`✅ Server is running on port ${PORT}`);
 });
