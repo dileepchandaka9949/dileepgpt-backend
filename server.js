@@ -3,12 +3,11 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 require("dotenv").config();
-const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require("openai");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -28,30 +27,28 @@ const MessageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model("Message", MessageSchema);
 
-// OpenAI Configuration
-const configuration = new Configuration({
+// OpenAI Setup
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
-// Test Route
+// Health check
 app.get("/", (req, res) => {
-  res.send("✅ DileepGPT Backend is Live!");
+  res.send("✅ DileepGPT Backend is Running");
 });
 
-// Main Chat Route
+// Chat Route
 app.post("/api/message", async (req, res) => {
   const { message } = req.body;
 
   try {
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: message }],
     });
 
-    const reply = response.data.choices[0].message.content;
+    const reply = response.choices[0].message.content;
 
-    // Save message to MongoDB
     const newMessage = new Message({ user: message, bot: reply });
     await newMessage.save();
 
@@ -62,7 +59,7 @@ app.post("/api/message", async (req, res) => {
   }
 });
 
-// Start Server
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
