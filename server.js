@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 require('dotenv').config();
 
 const app = express();
@@ -13,36 +13,33 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // MongoDB connection
-mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB error:', err));
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('✅ MongoDB connected'))
+.catch((err) => console.error('❌ MongoDB error:', err));
 
-// OpenAI Config
-const configuration = new Configuration({
+// OpenAI config
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('✅ DileepGPT backend is working');
+  res.send('✅ DileepGPT Backend is working');
 });
 
 app.post('/api/message', async (req, res) => {
   try {
     const userMessage = req.body.message;
-    console.log("User Message:", userMessage);
 
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: userMessage }],
     });
 
-    const botReply = response.data.choices[0].message.content;
+    const botReply = response.choices[0].message.content;
     res.json({ reply: botReply });
   } catch (error) {
     console.error('❌ OpenAI Error:', error.message);
@@ -50,6 +47,7 @@ app.post('/api/message', async (req, res) => {
   }
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Server is running on port ${PORT}`);
 });
